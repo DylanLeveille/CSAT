@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% from 'bootstrap5/form.html' import render_form, render_field, render_form_row %}
+
+{% block content %}
+<h1>Control Selection Assistant Tool (CSAT)</h1>
+<h2>Input Control File</h2>
+
+<form id="uploadForm" name="uploadForm" enctype="multipart/form-data" action="/" method="post" class="form" role="form">
+    {{ form.csrf_token }}
+
+    {{ render_field(form.excel_file) }}
+
+    <input class="btn btn-primary btn-sm" id="getTemplate" name="getTemplate" type="submit" value="Download Template File" formnovalidate>
+    <input class="btn btn-primary btn-sm" id="getExample" name="getExample" type="submit" value="Download Example File" formnovalidate>
+    {{ render_field(form.submit) }}
+</form>
+
+{% endblock %}

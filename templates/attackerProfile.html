@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+{% from 'bootstrap5/form.html' import render_form, render_field, render_form_row %}
+
+{% block content %}
+<h1>Control Selection Assistant Tool (CSAT)</h1>
+<h2>Input Budget and Attacker Profile</h2>
+
+<div id="formAlert" class="alert alert-danger alert-dismissible  hide" role="alert" style="display:none;">
+    <strong>Error!</strong> Each subgoal must have at least one objective checked accross all assets.
+    <button type="button" class="btn-close"  aria-label="Close"></button>
+</div>
+
+<form id="attackerProfile" target="_blank" onSubmit="return validateForm()"name="attackerProfile" action="/" method="post" class="form" role="form">
+    {{ goal_form.csrf_token }}
+
+    {{ render_field(goal_form.budget) }}
+    
+    <div id="subgoals" name="subgoals">
+        <div id="subgoalOriginal" class="mb-3">
+            <label class="form-label" name="subgoalTitle"><em>Ordered Objective 1</em></label>
+            {% for i in range(asset_names_len) %}
+                <div class="mb-3">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#collapse{{ asset_names[i] }}subgoal1" for="assetObjectives">{{ asset_names[i] }}</button>
+                </div>    
+                
+                <div id="collapse{{ asset_names[i] }}subgoal1" class="panel-collapse collapse">
+                    <ul class="form-control" id="{{ asset_names[i] }}assetObjectives">
+                        <li class='list-group-item'>
+                            <input class="form-check-input me-1" id="objectiveC" name="objectiveC-{{asset_names[i]}}-subgoal1" type="checkbox" value="c"> 
+                            <input type='hidden' value='0' name="objectiveC-{{asset_names[i]}}-subgoal1">
+                            <label>Confidentiality</label>
+                        </li>
+                        <li class='list-group-item'>
+                            <input class="form-check-input me-1" id="objectiveI" name="objectiveI-{{asset_names[i]}}-subgoal1" type="checkbox" value="i"> 
+                            <input type='hidden' value='0' name="objectiveI-{{asset_names[i]}}-subgoal1">
+                            <label>Integrity</label>
+                        </li>
+                        <li class='list-group-item'>
+                            <input class="form-check-input me-1" id="objectiveA" name="objectiveA-{{asset_names[i]}}-subgoal1" type="checkbox" value="a"> 
+                            <input type='hidden' value='0' name="objectiveA-{{asset_names[i]}}-subgoal1">
+                            <label>Availability</label>
+                        </li>
+                    </ul>
+                    
+                  </div>
+            {% endfor %} 
+        </div>
+    </div>
+    <input class="btn btn-primary btn-sm" id="addOrderedObjectives" name="addOrderedObjectives" type="button" value="Add Ordered Objective" onclick="addSubgoal()">
+    <input class="btn btn-primary btn-sm" id="removeOrderedObjectives" name="removeOrderedObjectives" type="button" value="Remove Ordered Objective" onclick="removeSubgoal()">
+    <input class="btn btn-primary btn-sm" id="findStrategies" name="findStrategies" type="submit" value="Find Suggested Control Strategies">
+</form>
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type=text/javascript>
+    function addSubgoal() {
+        $( document.getElementById("subgoalOriginal") ).clone().prop('id', 'clone').attr("name", "clone").appendTo( document.getElementById("subgoals"));
+    
+        var copies = $( document.getElementsByName("clone") )
+        var numCopies = $( document.getElementsByName("clone") ).length
+
+        //Change subgoal title number
+        $( document.getElementsByName("subgoalTitle") )[ numCopies ].innerHTML = "<em>Ordered Objective " + (numCopies+1) + "<em>";
+        
+        //Change collapsable button references and divs (collapsable areas)
+        var buttons = document.getElementsByName("clone")[ numCopies - 1 ].getElementsByTagName("button")
+        var divs = document.getElementsByName("clone")[ numCopies - 1 ].getElementsByTagName("div")
+        for(var i = 0; i < buttons.length; i++) {
+            var oldOnClickHref = buttons[i].getAttribute("data-bs-target")
+            var newOnClickHref = oldOnClickHref.replace(/.$/, numCopies+1)
+
+            //change source when button clicks
+            buttons[i].setAttribute("data-bs-target", newOnClickHref) 
+
+            //get the collapsable divs with this id (note: substring(1) removes the #)
+            var divToChange = document.getElementById(oldOnClickHref.substring(1))
+            divs[2*i + 1].setAttribute("class", "panel-collapse collapse")
+            divs[2*i + 1].setAttribute("id", newOnClickHref.substring(1))
+        }
+
+        //Clear inputs/checkbox checked property, and change name of each checkbox
+        var inputs = document.getElementsByName("clone")[ numCopies - 1 ].getElementsByTagName("input") 
+        for(var i = 0; i < inputs.length; i++) {
+            var oldNameTag = inputs[i].getAttribute("name")
+            inputs[i].setAttribute("name", oldNameTag.replace(/.$/, numCopies+1)) 
+            if (i % 2 == 0){
+                inputs[i].checked = false
+            }     
+        }
+    }
+
+    function removeSubgoal() {
+        var numCopies = $( document.getElementsByName("clone") ).length
+        if (0 != numCopies) {
+            $( document.getElementsByName("clone") )[numCopies - 1].remove();
+        }
+    }
+
+    function validateForm() {
+        var inputs = document.getElementsByName("subgoals")[0].getElementsByTagName("input") 
+
+        subgoalNum = 1
+        oneObjectivePerSubgoal = false
+        for(var i = 0; i < inputs.length; i++) {
+            if (i % 2 == 0) {
+                var input = inputs[i]
+                var currNum = input["name"].charAt(input["name"].length - 1);
+
+                if (currNum == subgoalNum.toString() && input.checked)  {
+                    oneObjectivePerSubgoal = true
+                }
+                else if (currNum != subgoalNum.toString()) { //we moved to the next subgoal
+                    if (!oneObjectivePerSubgoal) { //means not a single checkbox was checked in last subgoal
+                        break //stop loop
+                    }
+                    
+                    //check if very first checkbox in next subgoal is checked
+                    subgoalNum += 1
+                    oneObjectivePerSubgoal = false
+                    if (input.checked) {
+                        oneObjectivePerSubgoal = true
+                    }
+                }
+            }
+        }
+
+        if (!oneObjectivePerSubgoal) {
+            $("#formAlert").slideDown(400);
+            return false;
+        }
+
+        return true
+    }
+
+    $(document).ready(function () {
+        $(".alert").find(".btn-close").on("click", function (e) {
+            e.stopPropagation();    // Don't allow the click to bubble up the DOM
+            e.preventDefault();    // Don't let any default functionality occur (in case it's a link)
+            $(this).closest(".alert").slideUp(400);    // Hide this specific Alert
+        });
+    });
+
+</script>
+
+{% endblock %}
+

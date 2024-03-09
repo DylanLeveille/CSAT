@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% from 'bootstrap5/form.html' import render_form, render_field, render_form_row %}
+
+{% block content %}
+<h1>Control Selection Assistant Tool (CSAT)</h1>
+<h2>Suggested Controls Report</h2>
+
+{% for results, cases in resultByCases.items() %}
+    {% if cases[0] |length == 0 %}
+        {% set casesExist = False %}
+        <div class="alert alert-warning" role="alert">
+            <h4 class="alert-heading">No alternative metrics detected!</h4>
+        </div>
+    {% else %}
+        {% set casesExist = True %}
+        <div class="alert alert-dark" role="alert">
+        {% for i in range(0, cases |length) %}
+            <h2><b>Case</b></h2>
+            {% set case = cases[i] %}
+            {% for controlAlt in case %}
+            <p> {{ optionalControls[controlAlt[0]][0] }}</p>
+            <p>&emsp; {{ data.columns[controlAlt[1]] }}</p>
+            <p>&emsp;&emsp; {{ data.iat[0, controlAlt[1]] }} = {{ controlAlt[2] }}</p>
+            {% endfor %}
+
+            {% if i != ((cases |length ) - 1 ) %}
+                <hr>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+
+    {% for result in results %}
+        <div class="alert alert-success" role="alert">
+        <h4 class="alert-heading"><b>Strategy {{ loop.index }}</b></h4>
+        {% set controlNames = [] %}    
+
+        {% for control in mandatoryControls %}
+            {% set _ = controlNames.append(control[0]) %}   
+        {% endfor %}
+
+        {% for optIndex in result %}
+            {% set _ = controlNames.append(optionalControls[optIndex][0]) %}  
+        {% endfor %}
+
+        <ul>
+
+        
+
+        {% for x in controlNames |natsortList %}
+            <li>{{ x }}</li>
+        {% endfor %}
+
+        </ul>
+
+        </div>
+
+    {% endfor %}
+
+    {% if casesExist %}
+    </div>
+    {% endif %}
+{% endfor %}
+
+{% endblock %}
