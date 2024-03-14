@@ -143,7 +143,7 @@ def index():
 @app.route('/results', methods=['GET', 'POST'])
 def results():
     resultByCases, optionalControls, mandatoryControls = getResults(data, assets, objectivePriorities, budget)
-    
+ 
     return render_template(
                 "report.html",
                 resultByCases = resultByCases,

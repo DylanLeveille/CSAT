@@ -29,6 +29,22 @@
         {% endfor %}
     {% endif %}
 
+    {% set strategyCost = [] %}
+    {% for control in mandatoryControls %}
+        {% set _ = strategyCost.append( control[2] ) %}   
+    {% endfor %}
+    {% for result in results %}
+        {% if loop.index == 1 %}
+            {% for optIndex in result %}
+                {% set _ =  strategyCost.append( optionalControls[optIndex][2] ) %}  
+            {% endfor %}
+        {% endif %}
+    {% endfor %}
+
+    <div class="alert alert-primary" role="alert">
+        <h4 class="alert-heading"><b>Cost of Each Strategy: {{ strategyCost |sum }} </b></h4>
+    </div>
+
     {% for result in results %}
         <div class="alert alert-success" role="alert">
         <h4 class="alert-heading"><b>Strategy {{ loop.index }}</b></h4>
