@@ -1,7 +1,7 @@
-#Control Selection Assistant Tool (CSAT)
+# Control Selection Assistant Tool (CSAT)
 CSAT is a tool used to assist security analysts with control selection. The tool uses game theory and expected attacker profiles to help find the suggested controls for the system.
 
-##Running the Tool
+## Running the Tool
 To tool can be run from terminal using python. This is shown below. 
 
 ```
@@ -10,10 +10,10 @@ python app.py
 
 CSAT is a web application. By default, CSAT is hosted on http://127.0.0.1:5000/
 
-##Using the Tool
+## Using the Tool
 Using the tool involves performing two simple steps.
 
-###Step 1 --- Processing the Control Specification File
+### Step 1 --- Processing the Control Specification File
 When launching the tool, you will be met with a prompt for the control specification file. 
 ![ToolLaunched](./images/gameToolUI.PNG)
 
@@ -22,7 +22,7 @@ You can download the template for this file from this screen. Additionally, an e
 
 Clicking ```Browse``` allows you to browse to your own specification file. Clicking ```Submit Control File``` will submit the file for processing.
 
-###Step 2 --- Finding Suggested Security Controls
+### Step 2 --- Finding Suggested Security Controls
 You will be greeted with the following screen. 
 ![ToolLaunched](./images/gameToolUIFreshAttacker.PNG)
 
