@@ -3,6 +3,8 @@ from natsort import natsorted
 import pandas
 import re
 import sys
+import time
+import datetime
 
 metrics = {'none':0, 'low':0.2, 'medium':0.5, 'high':0.8, 'veryhigh':0.9} #global dict containing the metric to numeric conversions
 
@@ -276,21 +278,27 @@ def Impl_discoverBestStrategies(importantIndexes, currStrategies, allControls, b
                 controlToRemoveDep1.append(c)
         controlToRemoveDep1.remove(toRemove1)
         results1 = Impl_discoverBestStrategies(importantIndexes, copy1, allControls, budget)
-
-        # remove just one of the most costly controls
-        copy2 = deepcopy(currStrategies)
-        toRemove2 = mostExpensive.pop()
-        controlToRemoveDep2 = [] #keep track of dependents removed too
-        for c in findDependencies(toRemove2):
-            if c in copy2:  # might have been removed earlier
-                copy2.remove(c)
-                controlToRemoveDep2.append(c)
-        controlToRemoveDep2.remove(toRemove2)
-        results2 = Impl_discoverBestStrategies(importantIndexes, copy2, allControls, budget)
-
         #we now have results, replace with equivalent controls
         result += replaceResultsWithEquivControls(results1, leastEffective, toRemove1, controlToRemoveDep1)
-        result += replaceResultsWithEquivControls(results2, mostExpensive, toRemove2, controlToRemoveDep2)
+
+        haveEffNone = ( extractEffectiveness(allControls, toRemove1, importantIndexes, currStrategies) == 0 ) #check if least effective control was None
+
+        # if the least effective has no effectiveness, we can still say this is the worst control 
+        # as it does not contribute to our security goals in any way. We do this to help
+        # optimize this logic (more efficient).
+        if not haveEffNone: 
+            # remove just one of the most costly controls
+            copy2 = deepcopy(currStrategies)
+            toRemove2 = mostExpensive.pop()
+            controlToRemoveDep2 = [] #keep track of dependents removed too
+            for c in findDependencies(toRemove2):
+                if c in copy2:  # might have been removed earlier
+                    copy2.remove(c)
+                    controlToRemoveDep2.append(c)
+            controlToRemoveDep2.remove(toRemove2)
+            results2 = Impl_discoverBestStrategies(importantIndexes, copy2, allControls, budget)
+            #we now have results, replace with equivalent controls
+            result += replaceResultsWithEquivControls(results2, mostExpensive, toRemove2, controlToRemoveDep2)
 
         return result
 
@@ -463,9 +471,15 @@ def getResults(data, assetsParam, objectivePriorities, budget):
     print("Money Left: " + str(budgetLeft))
     # currOptionalStrategies = []
     # for each objective priority
+    start = time.time()
     resultByCases = discoverCases(objectivesToPass, optionalControls, budgetLeft) #= discoverBestStrategies(objectivesToPass, optionalControls, budgetLeft)
+    end = time.time()
     print('result')
     # result.sort()
     print(resultByCases)
+
+    convert = str(datetime.timedelta(seconds = (end - start)))
+    print("time")
+    print(convert)
 
     return resultByCases, optionalControls, mandatoryControls

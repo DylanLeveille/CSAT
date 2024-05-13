@@ -9,7 +9,7 @@
     {% if cases[0] |length == 0 %}
         {% set casesExist = False %}
         <div class="alert alert-warning" role="alert">
-            <h4 class="alert-heading">No alternative metrics detected!</h4>
+            <h4 class="alert-heading">Multiple effectiveness values were not detected!</h4>
         </div>
     {% else %}
         {% set casesExist = True %}
@@ -42,12 +42,12 @@
     {% endfor %}
 
     <div class="alert alert-primary" role="alert">
-        <h4 class="alert-heading"><b>Cost of Each Strategy: {{ strategyCost |sum }} </b></h4>
+        <h4 class="alert-heading"><b>Cost of Each Combination: {{ strategyCost |sum }} </b></h4>
     </div>
 
     {% for result in results %}
         <div class="alert alert-success" role="alert">
-        <h4 class="alert-heading"><b>Strategy {{ loop.index }}</b></h4>
+        <h4 class="alert-heading"><b>Security Control Combination {{ loop.index }}</b></h4>
         {% set controlNames = [] %}    
 
         {% for control in mandatoryControls %}

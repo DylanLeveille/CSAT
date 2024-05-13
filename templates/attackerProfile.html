@@ -17,7 +17,7 @@
     
     <div id="subgoals" name="subgoals">
         <div id="subgoalOriginal" class="mb-3">
-            <label class="form-label" name="subgoalTitle"><em>Ordered Objective 1</em></label>
+            <label class="form-label" name="subgoalTitle"><em>Attacker Objectives 1</em></label>
             {% for i in range(asset_names_len) %}
                 <div class="mb-3">
                     <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#collapse{{ asset_names[i] }}subgoal1" for="assetObjectives">{{ asset_names[i] }}</button>
@@ -46,8 +46,8 @@
             {% endfor %} 
         </div>
     </div>
-    <input class="btn btn-primary btn-sm" id="addOrderedObjectives" name="addOrderedObjectives" type="button" value="Add Ordered Objective" onclick="addSubgoal()">
-    <input class="btn btn-primary btn-sm" id="removeOrderedObjectives" name="removeOrderedObjectives" type="button" value="Remove Ordered Objective" onclick="removeSubgoal()">
+    <input class="btn btn-primary btn-sm" id="addOrderedObjectives" name="addOrderedObjectives" type="button" value="Add Attacker Objectives" onclick="addSubgoal()">
+    <input class="btn btn-primary btn-sm" id="removeOrderedObjectives" name="removeOrderedObjectives" type="button" value="Remove Attacker Objectives" onclick="removeSubgoal()">
     <input class="btn btn-primary btn-sm" id="findStrategies" name="findStrategies" type="submit" value="Find Suggested Control Strategies">
 </form>
 
@@ -60,7 +60,7 @@
         var numCopies = $( document.getElementsByName("clone") ).length
 
         //Change subgoal title number
-        $( document.getElementsByName("subgoalTitle") )[ numCopies ].innerHTML = "<em>Ordered Objective " + (numCopies+1) + "<em>";
+        $( document.getElementsByName("subgoalTitle") )[ numCopies ].innerHTML = "<em>Attacker Objectives " + (numCopies+1) + "<em>";
         
         //Change collapsable button references and divs (collapsable areas)
         var buttons = document.getElementsByName("clone")[ numCopies - 1 ].getElementsByTagName("button")
