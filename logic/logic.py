@@ -1,5 +1,6 @@
 from copy import deepcopy
 from natsort import natsorted
+from multiprocessing import Process, Manager
 import pandas
 import re
 import sys
@@ -7,10 +8,13 @@ import time
 import datetime
 
 metrics = {'none':0, 'low':0.2, 'medium':0.5, 'high':0.8, 'veryhigh':0.9} #global dict containing the metric to numeric conversions
+# allCaseResults = dict() #stores all results from each case (every process created stores results here)
 
-def discoverCases(objectives, allControls, budget):
+def discoverCases(objectives, allControls, budget, assets, dependencies, dependenciesInv):
     cases = [deepcopy(allControls)] # list of cells with comma separated effectiveness
     casesAsIndex = [list()] #to keep track of which case as index (e.g., change Control1 Confidentiality to 0.2)
+    manager = Manager() #used to manage a dictionary to be shared with processes spawned
+    allCaseResults = manager.dict() #reset the results dict for shared processes
 
     for rowIndex in range(0, len(allControls)):
         for columnIndex in range(4, len(allControls[rowIndex])):
@@ -38,9 +42,24 @@ def discoverCases(objectives, allControls, budget):
     resultByCases = dict() # stores results as keys (frozen list of frozen sets) and the values as the cases (as index)
                             # helps map which cases have same results
 
+    processes = [] #stores processes to calculate each case (much faster this way)
+
     #iterate through cases and discover best strategies for each case
-    for i in range(0, len(cases)):
-        caseResults = discoverBestStrategies(objectives, cases[i], budget)
+    for i in range(0, len(cases)): #i represents the case number
+        processes.append( Process( target=discoverBestStrategies, args=( objectives, cases[i], budget, i, assets, dependencies, dependenciesInv, allCaseResults ) ) ) #pass the case to find strategies for
+        # caseResults = discoverBestStrategies(objectives, cases[i], budget)
+
+    # Start all processes.
+    for p in processes:
+        p.start()
+
+    # Wait for all processes to finish.
+    for p in processes:
+        p.join()
+    
+    #processes will populate allCaseResults
+    for i in allCaseResults: #i represents the keys of this dict (i.e., the case Number)
+        caseResults = allCaseResults[i]
         caseResultsToBeFrozen = []
         for result in caseResults: #freeze each case result
             caseResultsToBeFrozen.append(frozenset(result))
@@ -50,13 +69,21 @@ def discoverCases(objectives, allControls, budget):
             resultByCases[caseResultsFrozen].append(casesAsIndex[i])
         else: #means results obtained not obtained by previous cases
             resultByCases[caseResultsFrozen] = [casesAsIndex[i]]
-    #print("result by cases")
-    #print(resultByCases)
+    print("result by cases")
+    print(resultByCases)
     return resultByCases
 
-def discoverBestStrategies(objectives, allControls, budget):
+def discoverBestStrategies(objectives, allControls, budget, caseNumber, assetsParam, dependenciesParam, dependenciesInvParam, allCaseResults):
     # for each asset in the objectives
     # remove those not in asset objectives
+
+    global assets
+    global dependencies
+    global dependenciesInv
+
+    assets = assetsParam
+    dependencies = dependenciesParam
+    dependenciesInv = dependenciesInvParam
 
     totalObjectives = len(objectives)
     objectiveIndex = 0
@@ -100,7 +127,8 @@ def discoverBestStrategies(objectives, allControls, budget):
 
         if objectiveIndex == totalObjectives:  # done
             #print("returning")
-            return bestSolutions
+            #return bestSolutions
+            allCaseResults[caseNumber] = bestSolutions
         else:
             #print('not done yet')
             bestSolutions = bestSolutions
@@ -386,7 +414,7 @@ def combineEffectiveness(controlIndexes, controls, index):
     return 1 - tempEff
 
 def extractMetricValue(metric):
-    return metrics[metric.lower()]
+    return metrics[metric.strip().lower()]
 
 
 def extractEffectivenessOfSolution(solution, allControls, importantIndexes):
@@ -401,9 +429,9 @@ def extractEffectivenessOfSolution(solution, allControls, importantIndexes):
 
 
 def getResults(data, assetsParam, objectivePriorities, budget):
-    global assets
-    global dependencies
-    global dependenciesInv
+    # global assets
+    # global dependencies
+    # global dependenciesInv
 
     assets = assetsParam
 
@@ -431,6 +459,8 @@ def getResults(data, assetsParam, objectivePriorities, budget):
             except Exception:
                 print("No Dependencies")
             optionalControls.append(row)
+    print('mandatory controls')
+    print(mandatoryControls)
     print('dependenciesTemp')
     print(dependenciesTemp)
 
@@ -472,7 +502,7 @@ def getResults(data, assetsParam, objectivePriorities, budget):
     # currOptionalStrategies = []
     # for each objective priority
     start = time.time()
-    resultByCases = discoverCases(objectivesToPass, optionalControls, budgetLeft) #= discoverBestStrategies(objectivesToPass, optionalControls, budgetLeft)
+    resultByCases = discoverCases(objectivesToPass, optionalControls, budgetLeft, assets, dependencies, dependenciesInv) #= discoverBestStrategies(objectivesToPass, optionalControls, budgetLeft)
     end = time.time()
     print('result')
     # result.sort()
